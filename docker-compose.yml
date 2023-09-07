@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./wordpress-site/restaurant:/var/www/html/restaurant
+      - ./wordpress-site/velgskog:/var/www/html/velgskog
+      - ./logs/nginx/access.log:/var/log/nginx/access.log:ro
+      - ./logs/nginx/error.log:/var/log/nginx/error.log:ro
+    environment:
+      - PHP_INI_UPLOAD_MAX_FILESIZE=1G
+      - PHP_INI_POST_MAX_SIZE=1G
+      - PHP_INI_MEMORY_LIMIT=1G
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx-conf:/etc/nginx/conf.d
+      - ./wordpress-site/restaurant:/var/www/html/restaurant
+      - ./wordpress-site/velgskog:/var/www/html/velgskog
+      - ./ssl:/etc/nginx/ssl
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - php
+  db:
+    image: mariadb
+    container_name: wordpress_php8_db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_DATABASE=wp
+      - MYSQL_USER=salihan
+      - MYSQL_PASSWORD=1234
